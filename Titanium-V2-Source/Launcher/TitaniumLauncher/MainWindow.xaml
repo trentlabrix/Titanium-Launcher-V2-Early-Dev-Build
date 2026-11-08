@@ -1,0 +1,1789 @@
+<Window x:Class="TitaniumLauncher.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="clr-namespace:TitaniumLauncher"
+        xmlns:controls="clr-namespace:TitaniumLauncher.Controls"
+        Title="Titanium Launcher"
+        Width="1280" Height="760"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        ResizeMode="CanMinimize"
+        Icon="Assets/titanium.ico"
+        FontFamily="{StaticResource BodyFont}"
+        TextOptions.TextFormattingMode="Display"
+        UseLayoutRounding="True" SnapsToDevicePixels="True">
+    <Window.InputBindings>
+        <KeyBinding Key="Escape" Command="{Binding CloseSettingsCommand}" />
+    </Window.InputBindings>
+
+    <Window.Resources>
+        <Style x:Key="StatusDot" TargetType="Ellipse">
+            <Setter Property="Width" Value="6" />
+            <Setter Property="Height" Value="6" />
+            <Setter Property="Fill" Value="{StaticResource DimTextBrush}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding State}" Value="Found">
+                    <Setter Property="Fill" Value="{StaticResource SuccessBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding HasBuildWarning}" Value="True">
+                    <Setter Property="Fill" Value="{StaticResource WarnBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding State}" Value="Detecting">
+                    <Setter Property="Fill" Value="{StaticResource WarnBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding State}" Value="Problem">
+                    <Setter Property="Fill" Value="{StaticResource DangerBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="ProfileDot" TargetType="Ellipse">
+            <Setter Property="Width" Value="6" />
+            <Setter Property="Height" Value="6" />
+            <Setter Property="Fill" Value="{StaticResource DimTextBrush}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding HasProfile}" Value="True">
+                    <Setter Property="Fill" Value="{StaticResource SuccessBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="ModeRadio" TargetType="RadioButton">
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="Margin" Value="0,0,0,12" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+
+        <Style x:Key="SeasonWheel" TargetType="ListBox">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Stretch" />
+            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+            <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Disabled" />
+            <Setter Property="ItemsPanel">
+                <Setter.Value>
+                    <ItemsPanelTemplate>
+                        <controls:RadialPanel Radius="205" Diameter="520" />
+                    </ItemsPanelTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBox">
+                        <ItemsPresenter />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SeasonWheelItem" TargetType="ListBoxItem">
+            <Setter Property="Width" Value="92" />
+            <Setter Property="Height" Value="92" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Stretch" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Grid>
+                            <Border x:Name="Glow" CornerRadius="17" Background="#003BD9FF" />
+                            <Border x:Name="Bd" CornerRadius="15" BorderBrush="#24FFFFFF" BorderThickness="1"
+                                    Background="#0A1A27">
+                                <ContentPresenter Margin="3" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+                            </Border>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="#663BD9FF" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Glow" Property="Background" Value="#253BD9FF" />
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="#CC3BD9FF" />
+                                <Setter TargetName="Bd" Property="BorderThickness" Value="2" />
+                                <Setter TargetName="Bd" Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect Color="#3BD9FF" BlurRadius="18" ShadowDepth="0" Opacity="0.35" />
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <DataTemplate x:Key="SeasonTile">
+            <Grid ToolTip="{Binding AvailabilityNote}" AutomationProperties.Name="{Binding Name}">
+                <Grid.Style>
+                    <Style TargetType="Grid">
+                        <Setter Property="Opacity" Value="1" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsReleased}" Value="False">
+                                <Setter Property="Opacity" Value="0.7" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Grid.Style>
+                <Border CornerRadius="12" Background="{Binding CoverBrush}" />
+                <Border CornerRadius="12">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                            <GradientStop Color="#59000000" Offset="0" />
+                            <GradientStop Color="#B8000000" Offset="1" />
+                        </LinearGradientBrush>
+                    </Border.Background>
+                </Border>
+                <Rectangle Fill="{StaticResource FineGridBrush}" Opacity="0.35" IsHitTestVisible="False" />
+                <Grid Margin="8,7,8,7">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <TextBlock Text="S E A S O N" FontSize="6" FontWeight="Bold" Foreground="#AFC7D3" HorizontalAlignment="Center" />
+                    <TextBlock Grid.Row="1" Text="{Binding Code}" FontFamily="{StaticResource DisplayFont}"
+                               FontSize="29" FontWeight="Bold" FontStyle="Italic" Foreground="#FFFFFF"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    <TextBlock Grid.Row="2" Text="{Binding ReleaseLabel}" FontSize="6.2" FontWeight="Bold"
+                               HorizontalAlignment="Center">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="#8093A0" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsReleased}" Value="True">
+                                        <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </Grid>
+            </Grid>
+        </DataTemplate>
+    </Window.Resources>
+
+    <Grid Margin="16">
+        <Border CornerRadius="16" Background="#000000">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="32" ShadowDepth="8" Opacity="0.6" Color="Black" />
+            </Border.Effect>
+        </Border>
+
+        <Border CornerRadius="16" Background="#050D15" BorderBrush="#2AFFFFFF" BorderThickness="1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="178" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- ======================= SIDEBAR ======================= -->
+                <Border Grid.Column="0" CornerRadius="15,0,0,15" BorderBrush="#12FFFFFF" BorderThickness="0,0,1,0">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                            <GradientStop Color="#091724" Offset="0" />
+                            <GradientStop Color="#050D15" Offset="1" />
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <Grid>
+                        <Rectangle Fill="{StaticResource FineGridBrush}" Opacity="0.3" IsHitTestVisible="False" />
+                        <Grid Margin="14,16,14,14">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <StackPanel Grid.Row="0" Orientation="Horizontal">
+                                <Border Width="56" Height="56" CornerRadius="13" Background="#0A1F2C"
+                                        BorderBrush="#3A9BC0" BorderThickness="1">
+                                    <Border.Effect>
+                                        <DropShadowEffect Color="#20B8E6" BlurRadius="18" ShadowDepth="0" Opacity="0.28" />
+                                    </Border.Effect>
+                                    <Image Source="Assets/logo.png" Stretch="UniformToFill"
+                                           RenderOptions.BitmapScalingMode="HighQuality" />
+                                </Border>
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="1" Margin="0,24,0,0">
+                                <TextBlock Text="M E N U" FontSize="8" FontWeight="Bold"
+                                           Foreground="#5C7787" Margin="16,0,0,9" />
+
+                                <Button Style="{StaticResource NavButton}" Content="Home"
+                                        Tag="&#xE80F;" ui:Ui.Active="{Binding IsHomeScreen}" Command="{Binding HomeCommand}"
+                                        AutomationProperties.Name="Home" />
+                                <Button Style="{StaticResource NavButton}" Content="Play"
+                                        Tag="&#xE768;" Command="{Binding PlayCommand}"
+                                        ToolTip="{Binding PlayHint}" ToolTipService.ShowOnDisabled="True"
+                                        AutomationProperties.Name="Play" />
+                                <Button Style="{StaticResource NavButton}" Content="Game files"
+                                        Tag="&#xE838;" Command="{Binding BrowseCommand}"
+                                        ToolTip="Choose the Fortnite build folder"
+                                        AutomationProperties.Name="Game files" />
+                                <Button Style="{StaticResource NavButton}" Content="Settings"
+                                        Tag="&#xE713;" Command="{Binding ToggleSettingsCommand}"
+                                        AutomationProperties.Name="Settings" />
+                                <Border Height="1" Background="#12FFFFFF" Margin="13,9,13,10" />
+                                <Button Style="{StaticResource NavButton}" Content="Discord"
+                                        Tag="&#xE8BD;" Command="{Binding OpenCommunityCommand}"
+                                        ToolTip="Join the Titanium Discord"
+                                        AutomationProperties.Name="Discord" />
+                                <Button Style="{StaticResource NavButton}" Content="Support"
+                                        Tag="&#xE897;" Command="{Binding OpenCommunityCommand}"
+                                        ToolTip="Get support in the Titanium Discord"
+                                        AutomationProperties.Name="Support" />
+                                <Button Style="{StaticResource NavButton}" Content="Credits"
+                                        Tag="&#xE716;" ui:Ui.Active="{Binding IsCreditsScreen}"
+                                        Command="{Binding OpenCreditsCommand}"
+                                        ToolTip="Meet the people behind Titanium"
+                                        AutomationProperties.Name="Credits" />
+                            </StackPanel>
+
+                            <Border Grid.Row="3" Height="168" CornerRadius="11" ClipToBounds="True"
+                                    BorderBrush="#2A5E7887" BorderThickness="1">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                        <GradientStop Color="#123245" Offset="0" />
+                                        <GradientStop Color="#07131E" Offset="1" />
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                                <Grid>
+                                    <Image Source="Assets/og-card.png" Stretch="UniformToFill"
+                                           RenderOptions.BitmapScalingMode="HighQuality" />
+                                    <Rectangle IsHitTestVisible="False">
+                                        <Rectangle.Fill>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                <GradientStop Color="#9905111A" Offset="0" />
+                                                <GradientStop Color="#3305111A" Offset="0.5" />
+                                                <GradientStop Color="#0005111A" Offset="1" />
+                                            </LinearGradientBrush>
+                                        </Rectangle.Fill>
+                                    </Rectangle>
+                                    <Grid Margin="12">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="*" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+                                        <StackPanel>
+                                            <TextBlock FontFamily="{StaticResource DisplayFont}"
+                                                       FontSize="15" FontWeight="Bold" FontStyle="Italic"
+                                                       LineHeight="15" Foreground="#FFFFFF" Text="PLAY&#10;THE OG&#10;WAY." />
+                                            <Border Width="20" Height="2" Background="{StaticResource AccentBrush}"
+                                                    HorizontalAlignment="Left" Margin="0,7,0,0" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Grid>
+                            </Border>
+
+                            <Grid Grid.Row="4" Margin="3,10,3,0">
+                                <TextBlock Text="{Binding LauncherVersionText}" FontSize="12.5" FontWeight="SemiBold"
+                                           Foreground="#8FA9B7" VerticalAlignment="Center" />
+                            </Grid>
+                        </Grid>
+                    </Grid>
+                </Border>
+
+                <!-- ======================= MAIN ======================= -->
+                <Grid Grid.Column="1">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="64" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <Grid Grid.Row="0" Background="Transparent" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="26,0,0,0">
+                            <TextBlock Text="TITANIUM" FontFamily="{StaticResource DisplayFont}" FontSize="22"
+                                       FontWeight="Bold" FontStyle="Italic" Foreground="{StaticResource TextBrush}" />
+                            <Border Width="1" Height="16" Background="#26FFFFFF" Margin="12,1,12,0" />
+                            <TextBlock Text="R E S T O R A T I O N   P R O J E C T" FontSize="8"
+                                       FontWeight="SemiBold" Foreground="#718C9B" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,11,0">
+                            <Button Style="{StaticResource WindowButton}" Click="Minimize_Click"
+                                    ToolTip="Minimize" AutomationProperties.Name="Minimize"
+                                    Content="&#xE921;" />
+                            <Button Style="{StaticResource CloseWindowButton}" Click="Close_Click" Margin="3,0,0,0"
+                                    ToolTip="Close" AutomationProperties.Name="Close"
+                                    Content="&#xE8BB;" />
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid Grid.Row="1" Margin="24,0,24,20">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="16" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="10" />
+                            <RowDefinition Height="136" />
+                        </Grid.RowDefinitions>
+
+                        <!-- ======================= HERO ======================= -->
+                        <Border Grid.Row="0" CornerRadius="12" BorderBrush="#24FFFFFF" BorderThickness="1"
+                                ClipToBounds="True"
+                                Visibility="{Binding IsHomeScreen, Converter={StaticResource BoolToVis}}">
+                            <Border.Background>
+                                <ImageBrush ImageSource="Assets/ice-bg.jpg" Stretch="UniformToFill" Opacity="0.8" />
+                            </Border.Background>
+                            <Grid>
+                                <Image Source="{Binding ActiveSeason.BackgroundImage}" Stretch="UniformToFill"
+                                       RenderOptions.BitmapScalingMode="HighQuality" IsHitTestVisible="False" />
+                                <Rectangle IsHitTestVisible="False">
+                                    <Rectangle.Style>
+                                        <Style TargetType="Rectangle">
+                                            <Setter Property="Opacity" Value="1" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding HasSeasonBackground}" Value="True">
+                                                    <Setter Property="Opacity" Value="0.62" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Rectangle.Style>
+                                    <Rectangle.Fill>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                            <GradientStop Color="#F207121C" Offset="0" />
+                                            <GradientStop Color="#E607121C" Offset="0.34" />
+                                            <GradientStop Color="#8507131D" Offset="0.63" />
+                                            <GradientStop Color="#B207121B" Offset="1" />
+                                        </LinearGradientBrush>
+                                    </Rectangle.Fill>
+                                </Rectangle>
+                                <Rectangle IsHitTestVisible="False">
+                                    <Rectangle.Style>
+                                        <Style TargetType="Rectangle">
+                                            <Setter Property="Opacity" Value="1" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding HasSeasonBackground}" Value="True">
+                                                    <Setter Property="Opacity" Value="0.58" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Rectangle.Style>
+                                    <Rectangle.Fill>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                            <GradientStop Color="#B3040C14" Offset="0" />
+                                            <GradientStop Color="#0F040C14" Offset="0.36" />
+                                            <GradientStop Color="#D1030B12" Offset="1" />
+                                        </LinearGradientBrush>
+                                    </Rectangle.Fill>
+                                </Rectangle>
+                                <Ellipse Width="520" Height="380" HorizontalAlignment="Left" VerticalAlignment="Top"
+                                         Margin="-60,-90,0,0" IsHitTestVisible="False">
+                                    <Ellipse.Fill>
+                                        <RadialGradientBrush>
+                                            <GradientStop Color="#1A2C7A93" Offset="0" />
+                                            <GradientStop Color="#002C7A93" Offset="1" />
+                                        </RadialGradientBrush>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+                                <Rectangle Fill="{StaticResource DotFieldBrush}" Opacity="0.55" IsHitTestVisible="False" />
+
+                                <!-- Stylised frozen monolith + emblem -->
+                                <Viewbox Stretch="Uniform" Width="760" Height="440" HorizontalAlignment="Right"
+                                         VerticalAlignment="Bottom" Margin="0,0,0,-2" IsHitTestVisible="False">
+                                    <Viewbox.Style>
+                                        <Style TargetType="Viewbox">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding HasSeasonBackground}" Value="True">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Viewbox.Style>
+                                    <Canvas Width="760" Height="460">
+                                        <Ellipse Canvas.Left="150" Canvas.Top="26" Width="380" Height="380">
+                                            <Ellipse.Fill>
+                                                <RadialGradientBrush>
+                                                    <GradientStop Color="#553BD9FF" Offset="0" />
+                                                    <GradientStop Color="#223BD9FF" Offset="0.45" />
+                                                    <GradientStop Color="#003BD9FF" Offset="1" />
+                                                </RadialGradientBrush>
+                                            </Ellipse.Fill>
+                                        </Ellipse>
+                                        <Rectangle Canvas.Left="282" Canvas.Top="0" Width="130" Height="430" Opacity="0.5">
+                                            <Rectangle.Fill>
+                                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                    <GradientStop Color="#003BD9FF" Offset="0" />
+                                                    <GradientStop Color="#183BD9FF" Offset="0.44" />
+                                                    <GradientStop Color="#003BD9FF" Offset="1" />
+                                                </LinearGradientBrush>
+                                            </Rectangle.Fill>
+                                        </Rectangle>
+                                        <Ellipse Canvas.Left="178" Canvas.Top="54" Width="326" Height="326"
+                                                 Stroke="#2E8DA8" StrokeThickness="1" Opacity="0.45" />
+                                        <Ellipse Canvas.Left="206" Canvas.Top="82" Width="270" Height="270"
+                                                 Stroke="#4BBAD4" StrokeThickness="1" StrokeDashArray="1,6"
+                                                 Opacity="0.5" />
+                                        <Ellipse Canvas.Left="238" Canvas.Top="114" Width="206" Height="206"
+                                                 Stroke="#63D8EE" StrokeThickness="1" Opacity="0.28" />
+                                        <Path Stroke="#5FD9F2" StrokeThickness="1.5" Opacity="0.55"
+                                              Data="M 183,299 A 200,200 0 0 1 405,117" />
+                                        <Path Stroke="#5FD9F2" StrokeThickness="1" Opacity="0.25"
+                                              Data="M 500,160 A 190,190 0 0 1 553,310" />
+                                        <Ellipse Canvas.Left="196" Canvas.Top="352" Width="300" Height="42" Opacity="0.7">
+                                            <Ellipse.Fill>
+                                                <RadialGradientBrush>
+                                                    <GradientStop Color="#663BD9FF" Offset="0" />
+                                                    <GradientStop Color="#003BD9FF" Offset="1" />
+                                                </RadialGradientBrush>
+                                            </Ellipse.Fill>
+                                        </Ellipse>
+                                        <Path Fill="#0C2A3C" Opacity="0.92"
+                                              Data="M0,460 L0,386 L56,348 L104,376 L166,312 L218,360 L284,330 L346,378 L414,296 L468,350 L536,314 L606,368 L674,326 L760,376 L760,460 Z" />
+                                        <Path Fill="#081E2C"
+                                              Data="M0,460 L0,416 L66,390 L128,412 L196,362 L252,408 L318,378 L390,418 L452,370 L520,404 L590,378 L660,416 L760,386 L760,460 Z" />
+                                        <Path Fill="#05131D"
+                                              Data="M604,436 L604,368 L611,368 L611,356 L618,356 L618,344 L625,344 L625,334 L632,334 L632,344 L639,344 L639,356 L646,356 L646,368 L653,368 L653,436 Z" />
+                                        <Rectangle Canvas.Left="626" Canvas.Top="348" Width="4" Height="8"
+                                                   Fill="#3BD9FF" Opacity="0.45" />
+                                        <Path Fill="#061520"
+                                              Data="M0,460 L0,442 L110,430 L190,446 L280,422 L370,446 L470,428 L560,446 L660,432 L760,448 L760,460 Z" />
+                                        <Image Canvas.Left="252" Canvas.Top="126" Width="176" Height="176"
+                                               Source="Assets/logo.png" RenderOptions.BitmapScalingMode="HighQuality"
+                                               RenderTransformOrigin="0.5,0.5">
+                                            <Image.RenderTransform>
+                                                <RotateTransform Angle="-7" />
+                                            </Image.RenderTransform>
+                                        </Image>
+                                        <Path Canvas.Left="452" Canvas.Top="150" Fill="#123C50" Opacity="0.85"
+                                              Data="M 10,0 L 20,22 L 10,44 L 0,22 Z">
+                                            <Path.RenderTransform>
+                                                <RotateTransform Angle="18" />
+                                            </Path.RenderTransform>
+                                        </Path>
+                                        <Path Canvas.Left="566" Canvas.Top="104" Fill="#16465C" Opacity="0.8"
+                                              Data="M 5,0 L 10,10 L 5,20 L 0,10 Z" />
+                                        <Path Canvas.Left="170" Canvas.Top="120" Fill="#16465C" Opacity="0.6"
+                                              Data="M 4,0 L 8,8 L 4,16 L 0,8 Z" />
+                                        <Ellipse Canvas.Left="210" Canvas.Top="118" Width="2" Height="2" Fill="#BDEFFF" Opacity="0.75" />
+                                        <Ellipse Canvas.Left="500" Canvas.Top="90" Width="3" Height="3" Fill="#BDEFFF" Opacity="0.55" />
+                                        <Ellipse Canvas.Left="540" Canvas.Top="260" Width="2" Height="2" Fill="#BDEFFF" Opacity="0.55" />
+                                        <Ellipse Canvas.Left="160" Canvas.Top="300" Width="2" Height="2" Fill="#BDEFFF" Opacity="0.45" />
+                                        <Ellipse Canvas.Left="470" Canvas.Top="210" Width="2" Height="2" Fill="#BDEFFF" Opacity="0.65" />
+                                        <Ellipse Canvas.Left="610" Canvas.Top="150" Width="2" Height="2" Fill="#BDEFFF" Opacity="0.45" />
+                                    </Canvas>
+                                </Viewbox>
+
+                                <!-- Hero copy -->
+                                <StackPanel Width="440" HorizontalAlignment="Left" VerticalAlignment="Center"
+                                            Margin="36,24,0,24">
+                                    <Border HorizontalAlignment="Left" Padding="11,4,18,4"
+                                            Background="{StaticResource AccentGradient}" RenderTransformOrigin="0.5,0.5">
+                                        <Border.RenderTransform>
+                                            <SkewTransform AngleX="-10" />
+                                        </Border.RenderTransform>
+                                        <TextBlock Text="WELCOME TO" FontFamily="{StaticResource DisplayFont}"
+                                                   FontSize="10" FontWeight="Bold" Foreground="#03212B"
+                                                   RenderTransformOrigin="0.5,0.5">
+                                            <TextBlock.RenderTransform>
+                                                <SkewTransform AngleX="10" />
+                                            </TextBlock.RenderTransform>
+                                        </TextBlock>
+                                    </Border>
+
+                                    <TextBlock Text="TITANIUM" FontFamily="{StaticResource DisplayFont}" FontSize="73"
+                                               FontWeight="Bold" FontStyle="Italic" LineHeight="66"
+                                               Margin="0,9,0,0">
+                                        <TextBlock.Foreground>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                <GradientStop Color="#FFFFFF" Offset="0" />
+                                                <GradientStop Color="#D7F4FF" Offset="0.62" />
+                                                <GradientStop Color="#9BD9ED" Offset="1" />
+                                            </LinearGradientBrush>
+                                        </TextBlock.Foreground>
+                                    </TextBlock>
+
+                                    <StackPanel Orientation="Horizontal" Margin="3,-8,0,0">
+                                        <TextBlock Text="LAUNCHER" FontFamily="{StaticResource DisplayFont}"
+                                                   FontSize="31" FontWeight="Bold" FontStyle="Italic"
+                                                   Foreground="{StaticResource AccentSoftBrush}"
+                                                   RenderTransformOrigin="0,0.5">
+                                            <TextBlock.RenderTransform>
+                                                <SkewTransform AngleX="-8" />
+                                            </TextBlock.RenderTransform>
+                                        </TextBlock>
+                                        <Border Width="42" Height="2" Background="{StaticResource AccentBrush}"
+                                                VerticalAlignment="Center" Margin="12,0,0,0" Opacity="0.8" />
+                                    </StackPanel>
+
+                                    <TextBlock FontSize="11.5" Foreground="#A9C0CC" LineHeight="18.5" Margin="2,11,0,0">
+                                        <Run Text="RELIVE THE ORIGINAL." />
+                                        <LineBreak />
+                                        <Run Text="PLAY FOREVER." Foreground="#7C97A5" />
+                                    </TextBlock>
+
+                                    <StackPanel Orientation="Horizontal" Margin="2,15,0,0">
+                                        <Ellipse Style="{StaticResource StatusDot}" VerticalAlignment="Center" />
+                                        <TextBlock Text="{Binding BuildStateLabel}" FontSize="9.5" FontWeight="Bold"
+                                                   Foreground="#DDEFF7" Margin="8,0,0,0" VerticalAlignment="Center" />
+                                        <Border Width="1" Height="11" Background="#2AFFFFFF" Margin="9,0" VerticalAlignment="Center" />
+                                        <TextBlock Text="{Binding BuildStateDetail}" FontSize="9.5"
+                                                   Foreground="#8FA9B7" MaxWidth="292"
+                                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                                   ToolTip="{Binding BuildStateDetail}" />
+                                    </StackPanel>
+
+                                    <StackPanel Orientation="Horizontal" Margin="0,17,0,0">
+                                        <Button Command="{Binding PlayCommand}" Content="PLAY NOW!"
+                                                ToolTip="{Binding PlayHint}"
+                                                ToolTipService.ShowOnDisabled="True" AutomationProperties.Name="Play now">
+                                            <Button.Style>
+                                                <Style TargetType="Button" BasedOn="{StaticResource PlayNowButton}">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding State}" Value="Found">
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                        <Button Command="{Binding BrowseCommand}"
+                                                AutomationProperties.Name="Select build folder">
+                                            <Button.Style>
+                                                <Style TargetType="Button" BasedOn="{StaticResource LaunchButton}">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding State}" Value="Found">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="&#xE838;" FontFamily="{StaticResource IconFont}" FontSize="13"
+                                                           VerticalAlignment="Center" />
+                                                <TextBlock Text="SELECT BUILD" FontFamily="{StaticResource DisplayFont}"
+                                                           FontSize="15" FontWeight="Bold" FontStyle="Italic"
+                                                           Margin="9,0,0,0" VerticalAlignment="Center" />
+                                                <TextBlock Text="&#xE76C;" FontFamily="{StaticResource IconFont}" FontSize="9"
+                                                           Margin="11,0,0,0" VerticalAlignment="Center" Opacity="0.7" />
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Style="{StaticResource GhostButton}" Margin="11,0,0,0"
+                                                VerticalAlignment="Center"
+                                                Command="{Binding ToggleSettingsCommand}"
+                                                AutomationProperties.Name="Game settings">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="&#xE713;" FontFamily="{StaticResource IconFont}" FontSize="13"
+                                                           Margin="0,0,9,0" VerticalAlignment="Center" />
+                                                <TextBlock Text="GAME SETTINGS" FontSize="10.5" FontWeight="SemiBold"
+                                                           VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+
+                                    <ToggleButton Style="{StaticResource MenuToggle}" Margin="2,12,0,0"
+                                                  HorizontalAlignment="Stretch"
+                                                  IsChecked="{Binding EnableMenu, Mode=TwoWay}"
+                                                  ToolTip="Inject the Titanium Menu into the player client. Press Insert in-game to open it."
+                                                  AutomationProperties.Name="Titanium Menu">
+                                        <StackPanel Margin="0,0,8,0">
+                                            <TextBlock Text="TITANIUM MENU" FontFamily="{StaticResource DisplayFont}"
+                                                       FontSize="10.5" FontWeight="Bold" FontStyle="Italic"
+                                                       Foreground="{StaticResource TextBrush}" />
+                                            <TextBlock Text="Injects on launch. Press Insert in-game to open."
+                                                       FontSize="8.5" Foreground="#7894A3" Margin="0,2,0,0"
+                                                       TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </ToggleButton>
+
+                                    <TextBlock Text="{Binding StatusMessage}" Margin="2,10,0,0" MaxWidth="430"
+                                               TextWrapping="Wrap" FontSize="10" Foreground="#8FE8FF"
+                                               Visibility="{Binding HasStatus, Converter={StaticResource BoolToVis}}" />
+                                </StackPanel>
+
+                                <!-- Right rail -->
+                                <StackPanel Width="268" HorizontalAlignment="Right" VerticalAlignment="Top"
+                                            Margin="0,14,14,0">
+                                    <Button Style="{StaticResource RailCard}" Height="130"
+                                            Command="{Binding ToggleSettingsCommand}"
+                                            ToolTip="Edit your profile and bot difficulty"
+                                            AutomationProperties.Name="Player profile">
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="*" />
+                                                <RowDefinition Height="Auto" />
+                                            </Grid.RowDefinitions>
+                                            <DockPanel>
+                                                <TextBlock Text="P L A Y E R" FontSize="8.5" FontWeight="Bold"
+                                                           Foreground="#6F8B9B" VerticalAlignment="Center" />
+                                                <TextBlock Text="&#xE77B;" FontFamily="{StaticResource IconFont}" FontSize="10"
+                                                           Foreground="#4DFFFFFF" HorizontalAlignment="Right" />
+                                            </DockPanel>
+                                            <Grid Grid.Row="1" Margin="0,6,0,6">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <Border Width="38" Height="38" CornerRadius="19"
+                                                        BorderBrush="#553BD9FF" BorderThickness="1">
+                                                    <Border.Background>
+                                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                            <GradientStop Color="#1A3BD9FF" Offset="0" />
+                                                            <GradientStop Color="#0A1E2C" Offset="1" />
+                                                        </LinearGradientBrush>
+                                                    </Border.Background>
+                                                    <TextBlock Text="{Binding PlayerInitial}" FontFamily="{StaticResource DisplayFont}"
+                                                               FontSize="18" FontWeight="Bold" Foreground="#A9F2FF"
+                                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                </Border>
+                                                <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding PlayerName}" FontSize="14" FontWeight="SemiBold"
+                                                               Foreground="{StaticResource TextBrush}"
+                                                               TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock Text="{Binding PlayerStatus}" FontSize="9"
+                                                               Foreground="#7894A3" TextTrimming="CharacterEllipsis" />
+                                                </StackPanel>
+                                            </Grid>
+                                            <Grid Grid.Row="2">
+                                                <TextBlock Text="{Binding DifficultyMeta}" FontSize="9"
+                                                           Foreground="#8DA7B6" VerticalAlignment="Center" />
+                                                <TextBlock Text="EDIT" HorizontalAlignment="Right" FontSize="8.5"
+                                                           FontWeight="Bold" Foreground="{StaticResource AccentBrush}"
+                                                           VerticalAlignment="Center" />
+                                            </Grid>
+                                        </Grid>
+                                    </Button>
+
+                                    <Button Style="{StaticResource RailCard}" Height="152" Margin="0,10,0,0"
+                                            Command="{Binding BrowseCommand}"
+                                            ToolTip="Choose or change your Fortnite build folder"
+                                            AutomationProperties.Name="Build folder">
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="*" />
+                                                <RowDefinition Height="Auto" />
+                                            </Grid.RowDefinitions>
+                                            <Border Height="56" CornerRadius="6" BorderBrush="#1AFFFFFF" BorderThickness="1">
+                                                <Border.Background>
+                                                    <ImageBrush ImageSource="Assets/ice-bg.jpg" Stretch="UniformToFill" Opacity="0.42" />
+                                                </Border.Background>
+                                                <Grid>
+                                                    <Border CornerRadius="6">
+                                                        <Border.Background>
+                                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                                                <GradientStop Color="#C406121B" Offset="0" />
+                                                                <GradientStop Color="#4D06121B" Offset="1" />
+                                                            </LinearGradientBrush>
+                                                        </Border.Background>
+                                                    </Border>
+                                                    <Grid Margin="9,6">
+                                                        <TextBlock Text="F O R T N I T E" FontSize="7.5" FontWeight="Bold"
+                                                                   Foreground="#B9D8E5" VerticalAlignment="Top" />
+                                                        <TextBlock Text="{Binding BuildVersionText}" FontFamily="{StaticResource DisplayFont}"
+                                                                   FontSize="26" FontWeight="Bold" FontStyle="Italic"
+                                                                   Foreground="#FFFFFF" VerticalAlignment="Bottom" />
+                                                        <Ellipse Style="{StaticResource StatusDot}" Width="6" Height="6"
+                                                                 HorizontalAlignment="Right" VerticalAlignment="Top" />
+                                                    </Grid>
+                                                </Grid>
+                                            </Border>
+                                            <StackPanel Grid.Row="1" Margin="0,8,0,0">
+                                                <TextBlock Text="C U R R E N T   B U I L D" FontSize="8.5" FontWeight="Bold"
+                                                           Foreground="#6F8B9B" />
+                                                <TextBlock Text="{Binding BuildEraText}" FontSize="12" FontWeight="SemiBold"
+                                                           Foreground="{StaticResource TextBrush}" Margin="0,2,0,0"
+                                                           TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Text="{Binding BuildSourceText}" FontSize="8.5"
+                                                           Foreground="#7894A3" Margin="0,1,0,0"
+                                                           TextTrimming="CharacterEllipsis" />
+                                            </StackPanel>
+                                            <Grid Grid.Row="3" Margin="0,6,0,0">
+                                                <TextBlock Text="{Binding BuildStateLabel}" FontSize="8.5" FontWeight="Bold"
+                                                           Foreground="#8DA7B6" VerticalAlignment="Center" />
+                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                                    <TextBlock Text="{Binding FolderActionText}" FontSize="8.5"
+                                                               Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center" />
+                                                    <TextBlock Text="  &#xE76C;" FontFamily="{StaticResource IconFont}" FontSize="7"
+                                                               Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center" />
+                                                </StackPanel>
+                                            </Grid>
+                                        </Grid>
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- ======================= SECTION HEADER ======================= -->
+                        <Grid Grid.Row="2"
+                              Visibility="{Binding IsHomeScreen, Converter={StaticResource BoolToVis}}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Grid Width="15" Height="14" Margin="0,0,9,0">
+                                    <Rectangle Width="4" Height="13" Fill="{StaticResource AccentBrush}"
+                                               HorizontalAlignment="Left" RenderTransformOrigin="0.5,0.5">
+                                        <Rectangle.RenderTransform>
+                                            <SkewTransform AngleX="-18" />
+                                        </Rectangle.RenderTransform>
+                                    </Rectangle>
+                                    <Rectangle Width="4" Height="13" Fill="#4F3BD9FF"
+                                               HorizontalAlignment="Left" Margin="8,0,0,0" RenderTransformOrigin="0.5,0.5">
+                                        <Rectangle.RenderTransform>
+                                            <SkewTransform AngleX="-18" />
+                                        </Rectangle.RenderTransform>
+                                    </Rectangle>
+                                </Grid>
+                                <TextBlock Text="CHAPTERS" FontFamily="{StaticResource DisplayFont}" FontSize="13"
+                                           FontWeight="Bold" Foreground="{StaticResource TextBrush}" />
+                            </StackPanel>
+                            <Border Grid.Column="1" Height="1" Background="#12FFFFFF" Margin="14,1,14,0"
+                                    VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="2" Text="SELECT A CHAPTER" FontSize="8"
+                                       FontWeight="SemiBold" Foreground="#6F8B9B" VerticalAlignment="Center" />
+                        </Grid>
+
+                        <!-- ======================= CHAPTERS ======================= -->
+                        <Grid Grid.Row="4"
+                              Visibility="{Binding IsHomeScreen, Converter={StaticResource BoolToVis}}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="14" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <Button Grid.Column="0" Style="{StaticResource SetupCard}" Padding="0"
+                                    Command="{Binding OpenChapterCommand}" CommandParameter="1"
+                                    ToolTip="Open Chapter 1" AutomationProperties.Name="Chapter 1">
+                                <Grid>
+                                    <Border CornerRadius="9">
+                                        <Border.Background>
+                                            <ImageBrush ImageSource="Assets/chapter-1-bg.png" Stretch="Fill" />
+                                        </Border.Background>
+                                    </Border>
+                                    <Border CornerRadius="9">
+                                        <Border.Background>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                <GradientStop Color="#33000000" Offset="0" />
+                                                <GradientStop Color="#00000000" Offset="0.24" />
+                                                <GradientStop Color="#00000000" Offset="0.74" />
+                                                <GradientStop Color="#4D000000" Offset="1" />
+                                            </LinearGradientBrush>
+                                        </Border.Background>
+                                    </Border>
+                                    <Border HorizontalAlignment="Right" VerticalAlignment="Top"
+                                            Margin="0,12,12,0" Padding="8,4" CornerRadius="9"
+                                            Background="#B3030B12" BorderBrush="#33FFFFFF" BorderThickness="1">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Ellipse Width="5" Height="5" Fill="{StaticResource SuccessBrush}"
+                                                     VerticalAlignment="Center" />
+                                            <TextBlock Text="ONLINE" FontSize="7.5" FontWeight="Bold"
+                                                       Foreground="#EFFAFF" Margin="6,0,0,0"
+                                                       VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+                            </Button>
+
+                            <Button Grid.Column="2" Style="{StaticResource SetupCard}" Padding="0"
+                                    Command="{Binding OpenChapterCommand}" CommandParameter="2"
+                                    ToolTip="Open Chapter 2" AutomationProperties.Name="Chapter 2">
+                                <Grid>
+                                    <Border CornerRadius="9">
+                                        <Border.Background>
+                                            <ImageBrush ImageSource="Assets/chapter-2-bg.png" Stretch="Fill" />
+                                        </Border.Background>
+                                    </Border>
+                                    <Border CornerRadius="9">
+                                        <Border.Background>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                <GradientStop Color="#33000000" Offset="0" />
+                                                <GradientStop Color="#00000000" Offset="0.24" />
+                                                <GradientStop Color="#00000000" Offset="0.74" />
+                                                <GradientStop Color="#4D000000" Offset="1" />
+                                            </LinearGradientBrush>
+                                        </Border.Background>
+                                    </Border>
+                                    <Border HorizontalAlignment="Right" VerticalAlignment="Top"
+                                            Margin="0,12,12,0" Padding="8,4" CornerRadius="9"
+                                            Background="#B3030B12" BorderBrush="#33FFFFFF" BorderThickness="1">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Ellipse Width="5" Height="5" Fill="{StaticResource WarnBrush}"
+                                                     VerticalAlignment="Center" />
+                                            <TextBlock Text="IN DEVELOPMENT" FontSize="7.5" FontWeight="Bold"
+                                                       Foreground="#EFFAFF" Margin="6,0,0,0"
+                                                       VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+                            </Button>
+                        </Grid>
+
+                        <!-- ======================= CHAPTER PAGE ======================= -->
+                        <Grid Grid.Row="0" Grid.RowSpan="5"
+                              Visibility="{Binding IsChapterScreen, Converter={StaticResource BoolToVis}}">
+                            <Border CornerRadius="12" BorderBrush="#24FFFFFF" BorderThickness="1" ClipToBounds="True">
+                                <Border.Background>
+                                    <ImageBrush ImageSource="Assets/ice-bg.jpg" Stretch="UniformToFill" Opacity="0.42" />
+                                </Border.Background>
+                                <Grid>
+                                    <Image Source="{Binding SelectedSeason.WheelPageBackgroundImage}"
+                                           Stretch="UniformToFill" Opacity="0.82"
+                                           RenderOptions.BitmapScalingMode="HighQuality"
+                                           IsHitTestVisible="False" />
+                                    <Rectangle IsHitTestVisible="False">
+                                        <Rectangle.Fill>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                <GradientStop Color="#CC040D16" Offset="0" />
+                                                <GradientStop Color="#66040D16" Offset="0.45" />
+                                                <GradientStop Color="#E6030B12" Offset="1" />
+                                            </LinearGradientBrush>
+                                        </Rectangle.Fill>
+                                    </Rectangle>
+                                    <Ellipse Width="640" Height="600" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                             IsHitTestVisible="False">
+                                        <Ellipse.Fill>
+                                            <RadialGradientBrush>
+                                                <GradientStop Color="#223BD9FF" Offset="0" />
+                                                <GradientStop Color="#003BD9FF" Offset="1" />
+                                            </RadialGradientBrush>
+                                        </Ellipse.Fill>
+                                    </Ellipse>
+                                    <Rectangle Fill="{StaticResource DotFieldBrush}" Opacity="0.45" IsHitTestVisible="False" />
+
+                                    <Button Style="{StaticResource GhostButton}" Height="32" Padding="14,0"
+                                            HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,14,0,0"
+                                            Command="{Binding BackToChaptersCommand}"
+                                            AutomationProperties.Name="Back to chapters">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="&#xE76B;" FontFamily="{StaticResource IconFont}" FontSize="8"
+                                                       VerticalAlignment="Center" Margin="0,0,7,0" />
+                                            <TextBlock Text="BACK TO CHAPTERS" FontSize="9" FontWeight="Bold"
+                                                       VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Button>
+
+                                    <Grid Width="560" Height="560" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <controls:SeasonWheel Width="560" Height="560"
+                                                              HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                              ItemsSource="{Binding Seasons}"
+                                                              SelectedItem="{Binding SelectedSeason, Mode=TwoWay}"
+                                                              InnerRadius="136" OuterRadius="268"
+                                                              AutomationProperties.Name="Season wheel"
+                                                              AutomationProperties.AutomationId="SeasonWheel"
+                                                              AutomationProperties.HelpText="Scroll or use the arrow keys to browse seasons. Click to inspect a season." />
+
+                                        <Grid Width="260" Height="260" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <Ellipse Fill="{Binding SelectedSeason.CoverBrush}" Opacity="0.46" />
+                                            <Ellipse>
+                                                <Ellipse.Fill>
+                                                    <RadialGradientBrush>
+                                                        <GradientStop Color="#B8061520" Offset="0" />
+                                                        <GradientStop Color="#E6071724" Offset="0.64" />
+                                                        <GradientStop Color="#F5030C14" Offset="1" />
+                                                    </RadialGradientBrush>
+                                                </Ellipse.Fill>
+                                            </Ellipse>
+                                            <Ellipse Fill="{StaticResource DotFieldBrush}" Opacity="0.2" />
+                                            <Ellipse Stroke="#8C3BD9FF" StrokeThickness="1.2">
+                                                <Ellipse.Effect>
+                                                    <DropShadowEffect Color="#3BD9FF" BlurRadius="44" ShadowDepth="0" Opacity="0.32" />
+                                                </Ellipse.Effect>
+                                            </Ellipse>
+                                            <Ellipse Margin="3" Stroke="#333BD9FF" StrokeThickness="1" />
+                                            <Ellipse Margin="11" Stroke="#14FFFFFF" StrokeThickness="1" />
+                                            <StackPanel Width="210" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                                    <Border Width="28" Height="1" Background="#527E96" VerticalAlignment="Center" />
+                                                    <TextBlock Text="S E L E C T   S E A S O N" FontSize="7" FontWeight="Bold"
+                                                               Foreground="#8CA9B8" Margin="8,0" VerticalAlignment="Center" />
+                                                    <Border Width="28" Height="1" Background="#527E96" VerticalAlignment="Center" />
+                                                </StackPanel>
+                                                <TextBlock Text="{Binding SelectedSeasonHeading}" FontFamily="{StaticResource DisplayFont}"
+                                                           FontSize="29" FontWeight="Bold" FontStyle="Italic"
+                                                           Foreground="#FFFFFF" HorizontalAlignment="Center"
+                                                           TextAlignment="Center" Margin="0,4,0,0" />
+                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,1,0,0">
+                                                    <Ellipse Width="4.5" Height="4.5" Margin="0,0,6,0" VerticalAlignment="Center">
+                                                        <Ellipse.Style>
+                                                            <Style TargetType="Ellipse">
+                                                                <Setter Property="Fill" Value="{StaticResource DimTextBrush}" />
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding SelectedSeason.IsReleased}" Value="True">
+                                                                        <Setter Property="Fill" Value="{StaticResource SuccessBrush}" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Ellipse.Style>
+                                                    </Ellipse>
+                                                    <TextBlock Text="{Binding SelectedSeasonStatus}" FontSize="7" FontWeight="Bold"
+                                                               VerticalAlignment="Center">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Foreground" Value="{StaticResource DimTextBrush}" />
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding SelectedSeason.IsReleased}" Value="True">
+                                                                        <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </StackPanel>
+                                                <Button Style="{StaticResource PrimaryButton}" Height="38"
+                                                        MinWidth="160" Padding="10,0" FontSize="9.5"
+                                                        Command="{Binding ChooseSeasonBuildCommand}"
+                                                        Margin="0,11,0,0"
+                                                        AutomationProperties.Name="Select season build"
+                                                        ToolTipService.ShowOnDisabled="True">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="&#xE768;" FontFamily="{StaticResource IconFont}" FontSize="10"
+                                                                   VerticalAlignment="Center" Margin="0,0,7,0"
+                                                                   Visibility="{Binding CanChooseSeasonBuild, Converter={StaticResource BoolToVis}}" />
+                                                        <TextBlock Text="{Binding SeasonActionText}" FontSize="9.5" FontWeight="Bold"
+                                                                   VerticalAlignment="Center" />
+                                                    </StackPanel>
+                                                    <Button.ToolTip>
+                                                        <TextBlock Text="Select this season's build folder to continue."
+                                                                   TextWrapping="Wrap" MaxWidth="230" />
+                                                    </Button.ToolTip>
+                                                </Button>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Grid>
+
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
+                                                VerticalAlignment="Bottom" Margin="0,0,0,18">
+                                        <Border Width="54" Height="1" Background="#24FFFFFF"
+                                                VerticalAlignment="Center" Margin="0,0,12,0" />
+                                        <TextBlock Text="SCROLL TO EXPLORE   &#x00B7;   CLICK TO SELECT"
+                                                   FontSize="7.2" FontWeight="SemiBold" Foreground="#6F8B9B"
+                                                   VerticalAlignment="Center" />
+                                        <Border Width="54" Height="1" Background="#24FFFFFF"
+                                                VerticalAlignment="Center" Margin="12,0,0,0" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </Grid>
+
+                        <!-- ======================= SEASON PAGE ======================= -->
+                        <Grid Grid.Row="0" Grid.RowSpan="5"
+                              Visibility="{Binding IsSeasonScreen, Converter={StaticResource BoolToVis}}">
+                            <Border CornerRadius="12" BorderBrush="#24FFFFFF" BorderThickness="1" ClipToBounds="True">
+                                <Border.Background>
+                                    <ImageBrush ImageSource="Assets/ice-bg.jpg" Stretch="UniformToFill" Opacity="0.5" />
+                                </Border.Background>
+                                <Grid>
+                                    <Grid IsHitTestVisible="False">
+                                        <Grid.Style>
+                                            <Style TargetType="Grid">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding SelectedSeason.Code}" Value="X">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Grid.Style>
+                                        <Image Source="Assets/season-x-background-image.jpg" Stretch="UniformToFill"
+                                               RenderOptions.BitmapScalingMode="HighQuality" />
+                                        <Rectangle>
+                                            <Rectangle.Fill>
+                                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                                    <GradientStop Color="#E6070E17" Offset="0" />
+                                                    <GradientStop Color="#C7070E17" Offset="0.28" />
+                                                    <GradientStop Color="#4D070E17" Offset="0.58" />
+                                                    <GradientStop Color="#00070E17" Offset="0.85" />
+                                                </LinearGradientBrush>
+                                            </Rectangle.Fill>
+                                        </Rectangle>
+                                        <Rectangle>
+                                            <Rectangle.Fill>
+                                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                    <GradientStop Color="#00070E17" Offset="0.46" />
+                                                    <GradientStop Color="#99070E17" Offset="1" />
+                                                </LinearGradientBrush>
+                                            </Rectangle.Fill>
+                                        </Rectangle>
+                                    </Grid>
+                                    <Grid IsHitTestVisible="False">
+                                        <Grid.Style>
+                                            <Style TargetType="Grid">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding SelectedSeason.Code}" Value="X">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Grid.Style>
+                                    <Rectangle Fill="{Binding SelectedSeason.CoverBrush}" Opacity="0.55" IsHitTestVisible="False" />
+                                    <Rectangle IsHitTestVisible="False">
+                                        <Rectangle.Fill>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                <GradientStop Color="#B3030B12" Offset="0" />
+                                                <GradientStop Color="#33030B12" Offset="0.42" />
+                                                <GradientStop Color="#F2030B12" Offset="1" />
+                                            </LinearGradientBrush>
+                                        </Rectangle.Fill>
+                                    </Rectangle>
+                                    <Rectangle Fill="{StaticResource DotFieldBrush}" Opacity="0.4" IsHitTestVisible="False" />
+                                    <Grid Width="430" Height="520" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                          Margin="0,0,20,0" IsHitTestVisible="False">
+                                        <Ellipse Width="430" Height="430" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <Ellipse.Fill>
+                                                <RadialGradientBrush>
+                                                    <GradientStop Color="#243BD9FF" Offset="0" />
+                                                    <GradientStop Color="#0B4A3BFF" Offset="0.55" />
+                                                    <GradientStop Color="#003BD9FF" Offset="1" />
+                                                </RadialGradientBrush>
+                                            </Ellipse.Fill>
+                                        </Ellipse>
+                                        <Ellipse Width="356" Height="356" Stroke="#4D7FE8FF" StrokeThickness="1"
+                                                 HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        <Ellipse Width="300" Height="300" Stroke="#339BEFFF" StrokeThickness="1"
+                                                 StrokeDashArray="1,7" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                 RenderTransformOrigin="0.5,0.5">
+                                            <Ellipse.RenderTransform>
+                                                <RotateTransform Angle="-18" />
+                                            </Ellipse.RenderTransform>
+                                        </Ellipse>
+                                        <Ellipse Width="420" Height="420" Stroke="#223BD9FF" StrokeThickness="1"
+                                                 StrokeDashArray="2,14" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                 RenderTransformOrigin="0.5,0.5">
+                                            <Ellipse.RenderTransform>
+                                                <RotateTransform Angle="25" />
+                                            </Ellipse.RenderTransform>
+                                        </Ellipse>
+                                        <Canvas Width="430" Height="520" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <Path Fill="#1C4E65" Opacity="0.8"
+                                                  Data="M 388,126 L 405,153 L 392,184 L 378,154 Z" />
+                                            <Path Fill="#124155" Opacity="0.85"
+                                                  Data="M 42,322 L 55,342 L 44,367 L 32,343 Z" />
+                                            <Path Fill="#26617A" Opacity="0.55"
+                                                  Data="M 362,352 L 371,369 L 364,386 L 355,370 Z" />
+                                            <Path Fill="#1C4E65" Opacity="0.45"
+                                                  Data="M 71,150 L 79,165 L 71,181 L 63,165 Z" />
+                                            <Path Stroke="#4D9BEFFF" StrokeThickness="1"
+                                                  Data="M 28,260 A 187,187 0 0 1 402,260" Opacity="0.65" />
+                                            <Path Stroke="#337FE8FF" StrokeThickness="1"
+                                                  Data="M 402,260 A 187,187 0 0 1 28,260" Opacity="0.28" />
+                                        </Canvas>
+                                        <TextBlock Text="{Binding SelectedSeason.Code}"
+                                                   FontFamily="{StaticResource DisplayFont}" FontSize="210"
+                                                   FontWeight="Bold" FontStyle="Italic" Foreground="#EFFBFF"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                   Opacity="0.92" />
+                                    </Grid>
+                                    </Grid>
+
+                                    <Button Style="{StaticResource GhostButton}" Height="32" Padding="14,0"
+                                            HorizontalAlignment="Left" VerticalAlignment="Top" Margin="18,16,0,0"
+                                            Command="{Binding BackToSeasonsCommand}"
+                                            AutomationProperties.Name="Back to seasons">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="&#xE76B;" FontFamily="{StaticResource IconFont}" FontSize="8"
+                                                       VerticalAlignment="Center" Margin="0,0,7,0" />
+                                            <TextBlock Text="BACK TO SEASONS" FontSize="9" FontWeight="Bold"
+                                                       VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Button>
+
+                                    <Border HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,16,18,0"
+                                            Padding="11,5" CornerRadius="12" Background="#99101F2B"
+                                            BorderBrush="#333BD9FF" BorderThickness="1">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Ellipse Width="5" Height="5" Fill="{StaticResource SuccessBrush}"
+                                                     VerticalAlignment="Center" />
+                                            <TextBlock Text="RELEASED" FontSize="7.5" FontWeight="Bold"
+                                                       Foreground="{StaticResource SuccessBrush}" Margin="6,0,0,0" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <StackPanel HorizontalAlignment="Left" VerticalAlignment="Top"
+                                                Width="600" Margin="38,104,0,0">
+                                        <TextBlock Text="{Binding SelectedSeason.Name}" FontFamily="{StaticResource BurbankFont}"
+                                                   FontSize="64" FontWeight="Bold" FontStretch="Condensed" FontStyle="Normal"
+                                                   Foreground="#FFFFFF" LineHeight="64" Margin="0,5,0,0" />
+                                        <TextBlock Text="{Binding SelectedSeason.Tagline}" FontFamily="{StaticResource BurbankFont}"
+                                                   FontSize="24" FontWeight="Bold" FontStretch="Condensed" FontStyle="Normal"
+                                                   Foreground="#D8E9F0" Margin="3,8,0,0" />
+                                        <Border Width="44" Height="2" Background="{StaticResource AccentBrush}"
+                                                HorizontalAlignment="Left" Margin="3,13,0,0" Opacity="0.85" />
+                                    </StackPanel>
+
+                                    <Border VerticalAlignment="Bottom" Margin="16,0,16,16"
+                                            CornerRadius="10" Background="#E6081722"
+                                            BorderBrush="#26FFFFFF" BorderThickness="1">
+                                        <Grid Margin="20,15">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="360" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <StackPanel>
+                                                <TextBlock Text="ABOUT THIS SEASON" FontSize="7.5" FontWeight="Bold"
+                                                           Foreground="#6F8B9B" />
+                                                <TextBlock Text="{Binding SelectedSeason.Description}" FontSize="11"
+                                                           Foreground="#C5DAE4" TextWrapping="Wrap" LineHeight="17"
+                                                           MaxWidth="560" Margin="0,6,0,0" />
+                                                <TextBlock Text="{Binding StatusMessage}" FontSize="9.5"
+                                                           Foreground="#8FE8FF" TextWrapping="Wrap" MaxWidth="560"
+                                                           Margin="0,6,0,0"
+                                                           Visibility="{Binding HasStatus, Converter={StaticResource BoolToVis}}" />
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Column="1" Margin="25,0,0,0">
+                                                <DockPanel>
+                                                    <TextBlock Text="SEASON BUILD" FontSize="7.5" FontWeight="Bold"
+                                                               Foreground="#6F8B9B" VerticalAlignment="Center" />
+                                                    <TextBlock Text="{Binding BuildVersionText}" FontFamily="{StaticResource DisplayFont}"
+                                                               FontSize="12" FontWeight="Bold" FontStyle="Italic"
+                                                               Foreground="#FFFFFF" HorizontalAlignment="Right" />
+                                                </DockPanel>
+                                                <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                                                    <Ellipse Style="{StaticResource StatusDot}" VerticalAlignment="Center" />
+                                                    <TextBlock Text="{Binding BuildStateLabel}" FontSize="9" FontWeight="Bold"
+                                                               Foreground="#DDEFF7" Margin="7,0,0,0" VerticalAlignment="Center" />
+                                                </StackPanel>
+                                                <TextBlock Text="{Binding DisplayPath}" FontSize="8.5"
+                                                           Foreground="#7894A3" TextTrimming="CharacterEllipsis"
+                                                           ToolTip="{Binding DisplayPath}" Margin="0,4,0,0" />
+                                                <TextBlock Text="{Binding BuildStateDetail}" FontSize="8.5"
+                                                           Foreground="#7894A3" TextTrimming="CharacterEllipsis"
+                                                           ToolTip="{Binding BuildStateDetail}" Margin="0,2,0,0" />
+                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,9,0,0">
+                                                    <Button Style="{StaticResource GhostButton}" Height="42"
+                                                            Padding="15,0" FontSize="9" Content="CHANGE BUILD"
+                                                            Command="{Binding ChooseSeasonBuildCommand}" />
+                                                    <Button Style="{StaticResource LaunchButton}" Height="46"
+                                                            MinWidth="174" Margin="8,0,0,0"
+                                                            Command="{Binding PlayCommand}"
+                                                            ToolTip="{Binding PlayHint}"
+                                                            ToolTipService.ShowOnDisabled="True"
+                                                            AutomationProperties.Name="Play season">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBlock Text="&#xE768;" FontFamily="{StaticResource IconFont}"
+                                                                       FontSize="11" VerticalAlignment="Center" />
+                                                            <TextBlock Text="PLAY SEASON" FontFamily="{StaticResource DisplayFont}"
+                                                                       FontSize="14" FontWeight="Bold" FontStyle="Italic"
+                                                                       Margin="8,0,0,0" VerticalAlignment="Center" />
+                                                        </StackPanel>
+                                                    </Button>
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </Grid>
+                            </Border>
+                        </Grid>
+
+                        <!-- ======================= CREDITS PAGE ======================= -->
+                        <Grid Grid.Row="0" Grid.RowSpan="5"
+                              Visibility="{Binding IsCreditsScreen, Converter={StaticResource BoolToVis}}"
+                              AutomationProperties.Name="Credits">
+                            <Grid.Resources>
+                                <Style x:Key="CreditsCard" TargetType="Border">
+                                    <Setter Property="Background" Value="#D90A1824" />
+                                    <Setter Property="BorderBrush" Value="#24FFFFFF" />
+                                    <Setter Property="BorderThickness" Value="1" />
+                                    <Setter Property="CornerRadius" Value="12" />
+                                    <Setter Property="Padding" Value="22,16" />
+                                    <Setter Property="Margin" Value="0,0,0,12" />
+                                </Style>
+                                <Style x:Key="CreditsSectionTitle" TargetType="TextBlock">
+                                    <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
+                                    <Setter Property="FontSize" Value="19" />
+                                    <Setter Property="FontWeight" Value="Bold" />
+                                    <Setter Property="FontStyle" Value="Italic" />
+                                    <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+                                </Style>
+                                <Style x:Key="CreditsName" TargetType="TextBlock">
+                                    <Setter Property="FontFamily" Value="{StaticResource BodyFont}" />
+                                    <Setter Property="FontSize" Value="13.5" />
+                                    <Setter Property="FontWeight" Value="SemiBold" />
+                                    <Setter Property="Foreground" Value="#FFFFFF" />
+                                </Style>
+                                <Style x:Key="CreditsCopy" TargetType="TextBlock">
+                                    <Setter Property="FontFamily" Value="{StaticResource BodyFont}" />
+                                    <Setter Property="FontSize" Value="10" />
+                                    <Setter Property="Foreground" Value="#9BB4C2" />
+                                    <Setter Property="TextWrapping" Value="Wrap" />
+                                    <Setter Property="LineHeight" Value="14.5" />
+                                </Style>
+                                <Style x:Key="CreditsAvatar" TargetType="Border">
+                                    <Setter Property="Width" Value="34" />
+                                    <Setter Property="Height" Value="34" />
+                                    <Setter Property="CornerRadius" Value="17" />
+                                    <Setter Property="Background" Value="#163BD9FF" />
+                                    <Setter Property="BorderBrush" Value="#333BD9FF" />
+                                    <Setter Property="BorderThickness" Value="1" />
+                                    <Setter Property="VerticalAlignment" Value="Top" />
+                                </Style>
+                                <Style x:Key="CreditsRule" TargetType="Border">
+                                    <Setter Property="Height" Value="1" />
+                                    <Setter Property="Background" Value="#12FFFFFF" />
+                                    <Setter Property="Margin" Value="42,9,0,9" />
+                                </Style>
+                            </Grid.Resources>
+                            <Border CornerRadius="12" BorderBrush="#24FFFFFF" BorderThickness="1" ClipToBounds="True">
+                                <Border.Background>
+                                    <ImageBrush ImageSource="Assets/ice-bg.jpg" Stretch="UniformToFill" Opacity="0.24" />
+                                </Border.Background>
+                                <Grid>
+                                    <Rectangle IsHitTestVisible="False">
+                                        <Rectangle.Fill>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                <GradientStop Color="#F207111B" Offset="0" />
+                                                <GradientStop Color="#E6081520" Offset="0.52" />
+                                                <GradientStop Color="#F5050D15" Offset="1" />
+                                            </LinearGradientBrush>
+                                        </Rectangle.Fill>
+                                    </Rectangle>
+                                    <Ellipse Width="600" Height="440" HorizontalAlignment="Right" VerticalAlignment="Top"
+                                             Margin="0,-190,-140,0" IsHitTestVisible="False">
+                                        <Ellipse.Fill>
+                                            <RadialGradientBrush>
+                                                <GradientStop Color="#183BD9FF" Offset="0" />
+                                                <GradientStop Color="#003BD9FF" Offset="1" />
+                                            </RadialGradientBrush>
+                                        </Ellipse.Fill>
+                                    </Ellipse>
+                                    <Rectangle Fill="{StaticResource DotFieldBrush}" Opacity="0.22" IsHitTestVisible="False" />
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                                  HorizontalScrollBarVisibility="Disabled"
+                                                  PanningMode="VerticalOnly">
+                                        <StackPanel Margin="36,24,32,24">
+                                            <Grid>
+                                                <StackPanel>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <Border Width="26" Height="2" Background="{StaticResource AccentBrush}"
+                                                                VerticalAlignment="Center" />
+                                                        <TextBlock Text="TITANIUM TEAM" FontSize="7.5" FontWeight="Bold"
+                                                                   Foreground="{StaticResource AccentSoftBrush}"
+                                                                   Margin="10,0,0,0" VerticalAlignment="Center" />
+                                                    </StackPanel>
+                                                    <TextBlock Text="CREDITS" FontFamily="{StaticResource BurbankFont}"
+                                                               FontSize="64" FontWeight="Bold" FontStretch="Condensed"
+                                                               FontStyle="Normal" Foreground="#FFFFFF"
+                                                               LineHeight="64" Margin="0,4,0,0" />
+                                                    <TextBlock Text="The people who build, test, and support Titanium Local."
+                                                               FontSize="11" Foreground="#AFC4D0" Margin="2,2,0,0" />
+                                                </StackPanel>
+                                                <Button Style="{StaticResource GhostButton}" Height="32" Padding="14,0"
+                                                        HorizontalAlignment="Right" VerticalAlignment="Top"
+                                                        Command="{Binding HomeCommand}"
+                                                        AutomationProperties.Name="Back to home">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="&#xE76B;" FontFamily="{StaticResource IconFont}" FontSize="8"
+                                                                   VerticalAlignment="Center" Margin="0,0,7,0" />
+                                                        <TextBlock Text="BACK HOME" FontSize="9" FontWeight="Bold"
+                                                                   VerticalAlignment="Center" />
+                                                    </StackPanel>
+                                                </Button>
+                                            </Grid>
+                                            <Border Width="52" Height="2" Background="{StaticResource AccentBrush}"
+                                                    HorizontalAlignment="Left" Opacity="0.85" Margin="2,13,0,19" />
+
+                                            <Border Style="{StaticResource CreditsCard}">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="200" />
+                                                        <ColumnDefinition Width="*" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel Margin="0,2,20,0">
+                                                        <TextBlock Text="01" FontFamily="{StaticResource DisplayFont}"
+                                                                   FontSize="8" FontWeight="Bold"
+                                                                   Foreground="{StaticResource AccentBrush}" />
+                                                        <TextBlock Text="DEVELOPERS" Style="{StaticResource CreditsSectionTitle}"
+                                                                   Margin="0,5,0,0" />
+                                                        <TextBlock Text="3 CONTRIBUTORS" FontSize="7.5" FontWeight="SemiBold"
+                                                                   Foreground="#6E8C9C" Margin="0,6,0,0" />
+                                                        <Border Width="30" Height="2" Background="{StaticResource AccentBrush}"
+                                                                HorizontalAlignment="Left" Opacity="0.8" Margin="0,10,0,0" />
+                                                    </StackPanel>
+                                                    <StackPanel Grid.Column="1">
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="42" />
+                                                                <ColumnDefinition Width="*" />
+                                                            </Grid.ColumnDefinitions>
+                                                            <Border Style="{StaticResource CreditsAvatar}">
+                                                                <TextBlock Text="J" FontFamily="{StaticResource DisplayFont}" FontSize="13"
+                                                                           FontWeight="Bold" Foreground="#D5F8FF"
+                                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                            </Border>
+                                                            <StackPanel Grid.Column="1">
+                                                                <TextBlock Text="Joey" Style="{StaticResource CreditsName}" />
+                                                                <TextBlock Text="Original Launcher Base, AI's, Offline Servers &amp; Much Much More"
+                                                                           Style="{StaticResource CreditsCopy}" Margin="0,2,0,0" />
+                                                            </StackPanel>
+                                                        </Grid>
+                                                        <Border Style="{StaticResource CreditsRule}" />
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="42" />
+                                                                <ColumnDefinition Width="*" />
+                                                            </Grid.ColumnDefinitions>
+                                                            <Border Style="{StaticResource CreditsAvatar}">
+                                                                <TextBlock Text="T" FontFamily="{StaticResource DisplayFont}" FontSize="13"
+                                                                           FontWeight="Bold" Foreground="#D5F8FF"
+                                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                            </Border>
+                                                            <StackPanel Grid.Column="1">
+                                                                <TextBlock Text="Trapcein" Style="{StaticResource CreditsName}" />
+                                                                <TextBlock Text="Original Launcher Base, AI's, Offline Servers &amp; Much Much More"
+                                                                           Style="{StaticResource CreditsCopy}" Margin="0,2,0,0" />
+                                                            </StackPanel>
+                                                        </Grid>
+                                                        <Border Style="{StaticResource CreditsRule}" />
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="42" />
+                                                                <ColumnDefinition Width="*" />
+                                                            </Grid.ColumnDefinitions>
+                                                            <Border Style="{StaticResource CreditsAvatar}">
+                                                                <TextBlock Text="T" FontFamily="{StaticResource DisplayFont}" FontSize="13"
+                                                                           FontWeight="Bold" Foreground="#D5F8FF"
+                                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                            </Border>
+                                                            <StackPanel Grid.Column="1">
+                                                                <TextBlock Text="trentlab" Style="{StaticResource CreditsName}" />
+                                                                <TextBlock Text="Contributed to some fixes in the new launcher (Titanium Launcher V2) for in game QOL (Quality of Life) options"
+                                                                           Style="{StaticResource CreditsCopy}" Margin="0,2,0,0" />
+                                                            </StackPanel>
+                                                        </Grid>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </Border>
+
+                                            <Border Style="{StaticResource CreditsCard}">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="200" />
+                                                        <ColumnDefinition Width="*" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel Margin="0,2,20,0">
+                                                        <TextBlock Text="02" FontFamily="{StaticResource DisplayFont}"
+                                                                   FontSize="8" FontWeight="Bold"
+                                                                   Foreground="{StaticResource AccentBrush}" />
+                                                        <TextBlock Text="UI DESIGNERS" Style="{StaticResource CreditsSectionTitle}"
+                                                                   Margin="0,5,0,0" />
+                                                        <TextBlock Text="1 CONTRIBUTOR" FontSize="7.5" FontWeight="SemiBold"
+                                                                   Foreground="#6E8C9C" Margin="0,6,0,0" />
+                                                        <Border Width="30" Height="2" Background="{StaticResource AccentBrush}"
+                                                                HorizontalAlignment="Left" Opacity="0.8" Margin="0,10,0,0" />
+                                                    </StackPanel>
+                                                    <Grid Grid.Column="1">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="42" />
+                                                            <ColumnDefinition Width="*" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <Border Style="{StaticResource CreditsAvatar}">
+                                                            <TextBlock Text="T" FontFamily="{StaticResource DisplayFont}" FontSize="13"
+                                                                       FontWeight="Bold" Foreground="#D5F8FF"
+                                                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                        </Border>
+                                                        <StackPanel Grid.Column="1">
+                                                            <TextBlock Text="trentlab" Style="{StaticResource CreditsName}" />
+                                                            <TextBlock Text="Designed the NEW Titanium Launcher V2 UI and contributed to UI Changes/Improvements in the Titanium Cheat Menu"
+                                                                       Style="{StaticResource CreditsCopy}" Margin="0,2,0,0" />
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </Grid>
+                                            </Border>
+
+                                            <Border Style="{StaticResource CreditsCard}">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="200" />
+                                                        <ColumnDefinition Width="*" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel Margin="0,2,20,0">
+                                                        <TextBlock Text="03" FontFamily="{StaticResource DisplayFont}"
+                                                                   FontSize="8" FontWeight="Bold"
+                                                                   Foreground="{StaticResource AccentBrush}" />
+                                                        <TextBlock Text="PROJECT CONTRIBUTORS" Style="{StaticResource CreditsSectionTitle}"
+                                                                   FontSize="17" Margin="0,5,0,0" />
+                                                        <TextBlock Text="2 CONTRIBUTORS" FontSize="7.5" FontWeight="SemiBold"
+                                                                   Foreground="#6E8C9C" Margin="0,6,0,0" />
+                                                        <Border Width="30" Height="2" Background="{StaticResource AccentBrush}"
+                                                                HorizontalAlignment="Left" Opacity="0.8" Margin="0,10,0,0" />
+                                                    </StackPanel>
+                                                    <StackPanel Grid.Column="1">
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="42" />
+                                                                <ColumnDefinition Width="*" />
+                                                            </Grid.ColumnDefinitions>
+                                                            <Border Style="{StaticResource CreditsAvatar}">
+                                                                <TextBlock Text="T" FontFamily="{StaticResource DisplayFont}" FontSize="13"
+                                                                           FontWeight="Bold" Foreground="#D5F8FF"
+                                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                            </Border>
+                                                            <StackPanel Grid.Column="1">
+                                                                <TextBlock Text="trentlab" Style="{StaticResource CreditsName}" />
+                                                                <TextBlock Text="Contributed launcher fixes and UI design across Titanium Launcher V2."
+                                                                           Style="{StaticResource CreditsCopy}" Margin="0,2,0,0" />
+                                                            </StackPanel>
+                                                        </Grid>
+                                                        <Border Style="{StaticResource CreditsRule}" />
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="42" />
+                                                                <ColumnDefinition Width="*" />
+                                                            </Grid.ColumnDefinitions>
+                                                            <Border Style="{StaticResource CreditsAvatar}">
+                                                                <TextBlock Text="H" FontFamily="{StaticResource DisplayFont}" FontSize="13"
+                                                                           FontWeight="Bold" Foreground="#D5F8FF"
+                                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                            </Border>
+                                                            <StackPanel Grid.Column="1">
+                                                                <TextBlock Text="hobosunite" Style="{StaticResource CreditsName}" />
+                                                                <TextBlock Text="Coded the entire Titanium Cheat Menu cheat's ensuring they work correctly"
+                                                                           Style="{StaticResource CreditsCopy}" Margin="0,2,0,0" />
+                                                            </StackPanel>
+                                                        </Grid>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </Border>
+
+                                            <Border Style="{StaticResource CreditsCard}" Margin="0,4,0,0"
+                                                    Padding="24,20" Background="#E60A1B28" BorderBrush="#2E3BD9FF">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="4" />
+                                                        <ColumnDefinition Width="*" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Border Width="4" Background="{StaticResource AccentBrush}" CornerRadius="2" />
+                                                    <StackPanel Grid.Column="1" Margin="18,0,0,0">
+                                                        <TextBlock Text="SPECIAL THANKS" FontSize="8" FontWeight="Bold"
+                                                                   Foreground="{StaticResource AccentSoftBrush}" />
+                                                        <TextBlock Text="PATREON SUPPORTERS &amp; BUG TESTERS"
+                                                                   FontFamily="{StaticResource DisplayFont}" FontSize="22"
+                                                                   FontWeight="Bold" FontStyle="Italic" Foreground="#FFFFFF"
+                                                                   Margin="0,4,0,0" />
+                                                        <TextBlock Text="We'd like to thank our Patreon Supporters &amp; Bug Testers that helped report bugs and gave and continue to give feedback on the launcher and ai's as well as overall gameplay. Without them Titanium Local wouldn't be as amazing as it is today!"
+                                                                   FontSize="10.5" Foreground="#BED1DB" TextWrapping="Wrap"
+                                                                   LineHeight="17" MaxWidth="840" HorizontalAlignment="Left"
+                                                                   Margin="0,7,0,0" />
+                                                    </StackPanel>
+                                                </Grid>
+                                            </Border>
+                                        </StackPanel>
+                                    </ScrollViewer>
+                                </Grid>
+                            </Border>
+                        </Grid>
+
+                        <!-- ======================= SETTINGS SHEET ======================= -->
+                        <Grid Grid.Row="0" Grid.RowSpan="5"
+                              Visibility="{Binding IsSettingsOpen, Converter={StaticResource BoolToVis}}">
+                            <Border Background="#B8040B12" CornerRadius="12">
+                                <Border.InputBindings>
+                                    <MouseBinding Gesture="LeftClick" Command="{Binding CloseSettingsCommand}" />
+                                </Border.InputBindings>
+                            </Border>
+                            <Border Width="438" HorizontalAlignment="Right" CornerRadius="12"
+                                    Background="#F2071420" BorderBrush="#26FFFFFF" BorderThickness="1">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="#000000" BlurRadius="30" ShadowDepth="0" Opacity="0.55" />
+                                </Border.Effect>
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <Grid Grid.Row="0" Margin="22,18,14,0">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="SETTINGS" FontFamily="{StaticResource DisplayFont}"
+                                                       FontSize="23" FontWeight="Bold" FontStyle="Italic"
+                                                       Foreground="{StaticResource TextBrush}" />
+                                            <TextBlock Text="Profiles, bots and launch options."
+                                                       Style="{StaticResource SettingsHint}" Margin="0,2,0,0" />
+                                        </StackPanel>
+                                        <Button Grid.Row="0" Style="{StaticResource IconButton}"
+                                                HorizontalAlignment="Right" VerticalAlignment="Top"
+                                                Command="{Binding CloseSettingsCommand}"
+                                                ToolTip="Close settings" AutomationProperties.Name="Close settings">
+                                            <TextBlock Text="&#xE711;" FontFamily="{StaticResource IconFont}" FontSize="11" />
+                                        </Button>
+                                        <Border Grid.Row="1" Height="1" Background="#16FFFFFF" Margin="0,14,8,0" />
+                                    </Grid>
+
+                                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
+                                                  HorizontalScrollBarVisibility="Disabled"
+                                                  PanningMode="VerticalOnly">
+                                        <StackPanel Margin="22,14,14,18">
+
+                                            <TextBlock Text="PLAYER PROFILES" Style="{StaticResource SettingsSection}" />
+                                            <TextBlock Text="The name your client joins under. Select a profile to use it."
+                                                       Style="{StaticResource SettingsHint}" Margin="0,5,0,10" />
+                                            <TextBlock Text="No profiles yet. Create one below to set your player name."
+                                                       Margin="0,0,0,10">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock" BasedOn="{StaticResource SettingsHint}">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding HasProfiles}" Value="True">
+                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                            <ListBox Style="{StaticResource ProfileListBox}" ItemsSource="{Binding Profiles}"
+                                                     SelectedItem="{Binding SelectedProfile, Mode=TwoWay}"
+                                                     AutomationProperties.Name="Profiles">
+                                                <ListBox.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*" />
+                                                                <ColumnDefinition Width="Auto" />
+                                                            </Grid.ColumnDefinitions>
+                                                            <StackPanel VerticalAlignment="Center">
+                                                                <TextBlock Text="{Binding Name}" FontSize="12.5"
+                                                                           Foreground="{StaticResource TextBrush}"
+                                                                           TextTrimming="CharacterEllipsis" />
+                                                                <TextBlock Text="{Binding ModeLabel}" FontSize="9.5"
+                                                                           Foreground="{StaticResource DimTextBrush}"
+                                                                           Margin="0,2,0,0" />
+                                                            </StackPanel>
+                                                            <Button Grid.Column="1" Style="{StaticResource IconButton}"
+                                                                    Width="24" Height="24"
+                                                                    Command="{Binding DataContext.DeleteProfileCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                                                    CommandParameter="{Binding}"
+                                                                    ToolTip="Delete profile" AutomationProperties.Name="Delete profile">
+                                                                <TextBlock Text="&#xE74D;" FontFamily="{StaticResource IconFont}" FontSize="10" />
+                                                            </Button>
+                                                        </Grid>
+                                                    </DataTemplate>
+                                                </ListBox.ItemTemplate>
+                                            </ListBox>
+                                            <TextBlock Text="NEW PROFILE MODE" Style="{StaticResource SettingsSection}" Margin="0,16,0,4" />
+                                            <TextBlock Text="Choose how this save starts. Each mode keeps its own separate save."
+                                                       Style="{StaticResource SettingsHint}" Margin="0,0,0,10" />
+                                            <RadioButton GroupName="ProfileMode" Style="{StaticResource ModeRadio}"
+                                                         IsChecked="{Binding NewProfileIsProgression, Mode=TwoWay}">
+                                                <StackPanel>
+                                                    <TextBlock Text="Progression Mode" FontWeight="SemiBold" Foreground="{StaticResource AccentSoftBrush}" />
+                                                    <TextBlock Text="Progression Mode is for users who want to feel that Nostalgic grinding feeling again. You start at level 0, tier 0. You can complete challenges and work your way through the battle pass"
+                                                               TextWrapping="Wrap" Foreground="{StaticResource DimTextBrush}"
+                                                               FontSize="10.5" LineHeight="15" Margin="0,3,0,0" />
+                                                </StackPanel>
+                                            </RadioButton>
+                                            <RadioButton GroupName="ProfileMode" Style="{StaticResource ModeRadio}"
+                                                         IsChecked="{Binding NewProfileIsUnlockedAll, Mode=TwoWay}">
+                                                <StackPanel>
+                                                    <TextBlock Text="Unlocked All" FontWeight="SemiBold" Foreground="{StaticResource AccentSoftBrush}" />
+                                                    <TextBlock Text="Unlock All is for users who want to enjoy the classic game but be able to use all cosmetics"
+                                                               TextWrapping="Wrap" Foreground="{StaticResource DimTextBrush}"
+                                                               FontSize="10.5" LineHeight="15" Margin="0,3,0,0" />
+                                                </StackPanel>
+                                            </RadioButton>
+                                            <Grid Margin="0,4,0,0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="8" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <Grid>
+                                                    <TextBox x:Name="NameBox" Style="{StaticResource GlassTextBox}" MaxLength="16"
+                                                             Text="{Binding NewProfileName, UpdateSourceTrigger=PropertyChanged}"
+                                                             AutomationProperties.Name="Player name">
+                                                        <TextBox.InputBindings>
+                                                            <KeyBinding Key="Return" Command="{Binding CreateProfileCommand}" />
+                                                        </TextBox.InputBindings>
+                                                    </TextBox>
+                                                    <TextBlock Text="Player name" IsHitTestVisible="False" FontSize="12.5"
+                                                               Margin="13,0,0,0" VerticalAlignment="Center"
+                                                               Foreground="{StaticResource DimTextBrush}">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Text, ElementName=NameBox}" Value="">
+                                                                        <Setter Property="Visibility" Value="Visible" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </Grid>
+                                                <Button Grid.Column="2" Content="CREATE" Style="{StaticResource PrimaryButton}"
+                                                        Command="{Binding CreateProfileCommand}" MinWidth="82" />
+                                            </Grid>
+                                            <TextBlock Text="{Binding ProfileError}" Margin="0,6,0,0" FontSize="10"
+                                                       TextWrapping="Wrap" Foreground="{StaticResource DangerBrush}"
+                                                       Visibility="{Binding HasProfileError, Converter={StaticResource BoolToVis}}" />
+
+                                            <Border Height="1" Background="#12FFFFFF" Margin="0,18,0,18" />
+
+                                            <TextBlock Text="BOT DIFFICULTY" Style="{StaticResource SettingsSection}" />
+                                            <TextBlock Text="{Binding DifficultyName}" FontFamily="{StaticResource DisplayFont}"
+                                                       FontSize="17" FontWeight="Bold" FontStyle="Italic"
+                                                       Foreground="{StaticResource AccentSoftBrush}" Margin="0,7,0,0" />
+                                            <Slider Style="{StaticResource IceSlider}" Minimum="0" Maximum="5"
+                                                    TickFrequency="1" IsSnapToTickEnabled="True" SmallChange="1"
+                                                    LargeChange="1" Margin="0,5,0,0"
+                                                    Value="{Binding DifficultyIndex, Mode=TwoWay}"
+                                                    AutomationProperties.Name="Bot difficulty" />
+                                            <UniformGrid Columns="6" Margin="0,1,0,7">
+                                                <Button Content="Trash" Style="{StaticResource LinkButton}" FontSize="9.5"
+                                                        Command="{Binding SetDifficultyCommand}" CommandParameter="0" />
+                                                <Button Content="Easy" Style="{StaticResource LinkButton}" FontSize="9.5"
+                                                        Command="{Binding SetDifficultyCommand}" CommandParameter="1" />
+                                                <Button Content="Medium" Style="{StaticResource LinkButton}" FontSize="9.5"
+                                                        Command="{Binding SetDifficultyCommand}" CommandParameter="2" />
+                                                <Button Content="Hard" Style="{StaticResource LinkButton}" FontSize="9.5"
+                                                        Command="{Binding SetDifficultyCommand}" CommandParameter="3" />
+                                                <Button Content="Sweat" Style="{StaticResource LinkButton}" FontSize="9.5"
+                                                        Command="{Binding SetDifficultyCommand}" CommandParameter="4" />
+                                                <Button Content="Mixed" Style="{StaticResource LinkButton}" FontSize="9.5"
+                                                        Command="{Binding SetDifficultyCommand}" CommandParameter="5" />
+                                            </UniformGrid>
+                                            <TextBlock Text="{Binding DifficultyDescription}" Style="{StaticResource SettingsHint}" />
+
+                                            <TextBlock Text="PRESETS" Style="{StaticResource SettingsSection}" Margin="0,18,0,0" />
+                                            <TextBlock Text="Saved difficulty" Style="{StaticResource SettingsHint}" Margin="0,4,0,5" />
+                                            <ComboBox Style="{StaticResource DarkComboBox}"
+                                                      ItemsSource="{Binding DifficultyPresets}"
+                                                      SelectedItem="{Binding SelectedDifficultyPreset}"
+                                                      AutomationProperties.Name="Saved difficulty preset">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Name}" />
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                            <TextBlock Text="Preset name" Style="{StaticResource SettingsHint}" Margin="0,10,0,4" />
+                                            <TextBox Style="{StaticResource GlassTextBox}"
+                                                     Text="{Binding PresetName, UpdateSourceTrigger=PropertyChanged}"
+                                                     MaxLength="60" Margin="0,0,0,18"
+                                                     AutomationProperties.Name="Preset name" />
+                                            <WrapPanel Margin="0,9,0,0">
+                                                <Button Content="SAVE" Style="{StaticResource PrimaryButton}"
+                                                        Command="{Binding SavePresetCommand}" Margin="0,0,7,7" />
+                                                <Button Content="IMPORT .FNP" Style="{StaticResource PrimaryButton}"
+                                                        Command="{Binding ImportPresetCommand}" Margin="0,0,7,7" />
+                                                <Button Content="EXPORT .FNP" Style="{StaticResource PrimaryButton}"
+                                                        Command="{Binding ExportPresetCommand}" Margin="0,0,0,7" />
+                                            </WrapPanel>
+                                            <TextBlock Text="{Binding PresetStatus}" TextWrapping="Wrap"
+                                                       Foreground="{StaticResource AccentSoftBrush}" FontSize="9.5"
+                                                       Margin="0,0,0,4" />
+
+                                            <Expander Style="{StaticResource DarkExpander}" FontSize="11.5"
+                                                      Header="Customize 20 bot skills" Margin="0,10,0,0"
+                                                      IsExpanded="False">
+                                                <ItemsControl ItemsSource="{Binding SkillSliders}">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <StackPanel Margin="0,10,0,4">
+                                                                <DockPanel>
+                                                                    <TextBlock Text="{Binding Value}" DockPanel.Dock="Right"
+                                                                               Foreground="{StaticResource AccentSoftBrush}"
+                                                                               HorizontalAlignment="Right" FontSize="10.5" />
+                                                                    <TextBlock Text="{Binding Definition.Name}"
+                                                                               Foreground="{StaticResource TextBrush}"
+                                                                               FontWeight="SemiBold" FontSize="11" />
+                                                                </DockPanel>
+                                                                <TextBlock Text="{Binding Definition.Description}"
+                                                                           Style="{StaticResource SettingsHint}"
+                                                                           FontSize="9" Margin="0,2,0,3" />
+                                                                <Slider Style="{StaticResource IceSlider}" Minimum="0" Maximum="100"
+                                                                        TickFrequency="1" IsSnapToTickEnabled="True"
+                                                                        Value="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                                        AutomationProperties.Name="{Binding Definition.Name}" />
+                                                            </StackPanel>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </Expander>
+
+                                            <Border Background="#0B2231" CornerRadius="6" Padding="10,7"
+                                                    BorderBrush="#1C3BD9FF" BorderThickness="1" Margin="0,16,0,0">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="AI" FontFamily="{StaticResource DisplayFont}"
+                                                               FontWeight="Bold" FontSize="10"
+                                                               Foreground="{StaticResource AccentBrush}" />
+                                                    <TextBlock Text="TITANIUM" FontFamily="{StaticResource DisplayFont}"
+                                                               FontWeight="Bold" FontSize="10" Margin="4,0,0,0"
+                                                               Foreground="{StaticResource TextBrush}" />
+                                                    <TextBlock Text="built-in bot brain" FontSize="8.5"
+                                                               Foreground="#7894A3" Margin="8,0,0,0"
+                                                               VerticalAlignment="Center" />
+                                                </StackPanel>
+                                            </Border>
+
+                                            <TextBlock Text="BOTS PER MATCH" Style="{StaticResource SettingsSection}" Margin="0,18,0,0" />
+                                            <TextBlock Text="Enter a number or range, such as 40-60. Leave blank for 99 bots. Matches are capped at 100 players."
+                                                       Style="{StaticResource SettingsHint}" Margin="0,5,0,7" />
+                                            <TextBox Style="{StaticResource GlassTextBox}"
+                                                     Text="{Binding BotCountRange, UpdateSourceTrigger=PropertyChanged}"
+                                                     AutomationProperties.Name="Bots per match" />
+                                            <TextBlock Text="{Binding BotCountError}" Margin="0,5,0,0"
+                                                       Foreground="{StaticResource DangerBrush}" FontSize="9.5"
+                                                       TextWrapping="Wrap" />
+                                            <CheckBox Style="{StaticResource DarkCheckBox}"
+                                                      Content="Confirm edits on release" Margin="0,13,0,0"
+                                                      IsChecked="{Binding EditOnRelease}"
+                                                      AutomationProperties.Name="Confirm edits on release" />
+
+                                            <Border Height="1" Background="#12FFFFFF" Margin="0,18,0,18" />
+
+                                            <TextBlock Text="LAUNCH ARGUMENTS" Style="{StaticResource SettingsSection}" />
+                                            <TextBlock Text="Extra command-line flags passed to the game when you press play."
+                                                       Style="{StaticResource SettingsHint}" Margin="0,5,0,7" />
+                                            <TextBox Style="{StaticResource GlassTextBox}"
+                                                     Text="{Binding LaunchArguments, UpdateSourceTrigger=PropertyChanged}"
+                                                     AutomationProperties.Name="Launch arguments" />
+                                        </StackPanel>
+                                    </ScrollViewer>
+
+                                    <Border Grid.Row="1" Height="40" VerticalAlignment="Bottom"
+                                            IsHitTestVisible="False">
+                                        <Border.Background>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                <GradientStop Color="#00071420" Offset="0" />
+                                                <GradientStop Color="#F2071420" Offset="1" />
+                                            </LinearGradientBrush>
+                                        </Border.Background>
+                                    </Border>
+
+                                    <Border Grid.Row="2" BorderBrush="#12FFFFFF" BorderThickness="0,1,0,0"
+                                            Padding="22,11,22,15">
+                                        <Grid>
+                                            <TextBlock Text="Changes save automatically" FontSize="8.5"
+                                                       Foreground="{StaticResource DimTextBrush}" VerticalAlignment="Center" />
+                                            <Button Content="DONE" Style="{StaticResource PrimaryButton}" MinWidth="96"
+                                                    HorizontalAlignment="Right" Command="{Binding CloseSettingsCommand}" />
+                                        </Grid>
+                                    </Border>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </Grid>
+                </Grid>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

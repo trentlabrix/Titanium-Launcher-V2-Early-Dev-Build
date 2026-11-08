@@ -1,0 +1,55 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AssemblyName>TitaniumLauncher</AssemblyName>
+    <RootNamespace>TitaniumLauncher</RootNamespace>
+    <ApplicationIcon>Assets\titanium.ico</ApplicationIcon>
+    <Version>1.1.18</Version>
+    <PlatformTarget>x64</PlatformTarget>
+    <Product>Titanium Launcher</Product>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+  </PropertyGroup>
+  <ItemGroup>
+    <Resource Include="Assets\ice-bg.jpg" />
+    <Resource Include="Assets\logo.png" />
+    <Resource Include="Assets\og-card.png" />
+    <Resource Include="Assets\season-x-background-image.jpg" />
+    <Resource Include="Assets\Season 0 Wheel page background.png" />
+    <Resource Include="Assets\Season 4 wheel page background.jpg" />
+    <Resource Include="Assets\Season 5 wheel page background.jpg" />
+    <Resource Include="Assets\Season 6 wheel page background.jpg" />
+    <Resource Include="Assets\Season 7 wheel page background.jpg" />
+    <Resource Include="Assets\Season 8 wheel page background.jpg" />
+    <Resource Include="Assets\Season 9 Wheel page background.png" />
+    <Resource Include="Assets\Season x wheel page background.png" />
+    <Resource Include="Assets\BurbankBigCondensedBold.otf" />
+    <Resource Include="Assets\titanium.ico" />
+    <Resource Include="Assets\chapter-1-bg.png" />
+    <Resource Include="Assets\chapter-2-bg.png" />
+    <Resource Include="Assets\season-0.png" />
+    <Resource Include="Assets\season-1.png" />
+    <Resource Include="Assets\season-2.png" />
+    <Resource Include="Assets\season-3.png" />
+    <Resource Include="Assets\season-4.png" />
+    <Resource Include="Assets\season-5.png" />
+    <Resource Include="Assets\season-6.png" />
+    <Resource Include="Assets\season-7.png" />
+    <Resource Include="Assets\season-8.png" />
+    <Resource Include="Assets\season-9.png" />
+    <Resource Include="Assets\season-x.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Runtime\**\*" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+  </ItemGroup>
+  <Target Name="EmbedTitaniumRuntime" BeforeTargets="AssignTargetPaths">
+    <MakeDir Directories="$(IntermediateOutputPath)" />
+    <ZipDirectory SourceDirectory="$(MSBuildProjectDirectory)\Runtime" DestinationFile="$(IntermediateOutputPath)TitaniumRuntime.zip" Overwrite="true" />
+    <ItemGroup>
+      <EmbeddedResource Include="$(IntermediateOutputPath)TitaniumRuntime.zip" LogicalName="TitaniumLauncher.Runtime.zip" />
+    </ItemGroup>
+  </Target>
+</Project>
